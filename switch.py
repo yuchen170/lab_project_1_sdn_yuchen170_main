@@ -111,23 +111,48 @@ def main():
     #msg = str()
     switch.sendto((str(my_id)+' Register_Request ').encode('utf-8'),('127.0.0.1',9999))
     #print(switch.recvfrom.decoede('utf-8'))
-
+    '''
     def Timer():
         threading.Timer(5.0, Timer).start()
         for n in num_switch:
-            controller.sendto(('Keep_Alive').encode('utf-8'),(switch_host[n],switch_port[n]))
+            switch.sendto(('Keep_Alive').encode('utf-8'),(switch_host[n],switch_port[n]))
         Timer()
-    
+    '''
+    route_received=[]
+    RT_switchID = []
+    RT_DestID = []
+    RT_NextHop=[]
+
     while(1):
         msg, addr = switch.recvfrom(1024)
         print(msg.decode('utf8'))
         
         parse = msg.split( )
         #print(parse[1])
-        if 'Register_Response' in str(parse[1]):
+        type=str(parse[1])
+        if 'Register_Response' in type:
             register_response_received()
-        if 'Route_Table' in str(parse[1]):
-            for 
+        if 'Route_Table' in type:
+            num_rule = int(parse[2])
+            for n in range(num_rule):
+                msg, addr = switch.recvfrom(1024)
+                route_received.append(msg)
+            print(route_received)
+            print('received')
+            route_table = [[-1 for x in range(3)] for y in range(num_rule)]
+            for n in range(num_rule):
+                x = route_received[n].split( )
+                dest = int(x[0])
+                next = int(x[1])
+                route_table[n][0] = my_id
+                route_table[n][1] = dest
+                route_table[n][2] = next
+            print(route_table)
+            routing_table_update(route_table)
+            
+                
+                
+                
             
             
             
