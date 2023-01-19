@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 """This is the Controller Starter Code for ECE50863 Lab Project 1
 Author: Xin Du
@@ -109,6 +110,7 @@ def write_to_log(log):
         # Write to log
         log_file.writelines(log)
 
+
 def main():
     #Check for number of arguments and exit if host/port not provided
     num_args = len(sys.argv)
@@ -117,8 +119,9 @@ def main():
         sys.exit(1)
     
     # Write your code below or elsewhere in this file
+    port = int(sys.argv[1])
     controller = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    controller.bind(('127.0.0.1',9999))
+    controller.bind(('127.0.0.1',port))
     
     #read config file
     file = str(sys.argv[2])
@@ -128,14 +131,13 @@ def main():
     with open(file) as f:
         config_array = f.readlines()
     num_switch = int(config_array[0])
-    #print(num_switch)
     Matrix = [[-2 for x in range(3)] for y in range(len(config_array)-1)]
 
     for n in range(len(config_array)-1):
         Matrix[n] = config_array[n+1].split( )
         for m in range(3):
             Matrix[n][m] = int(Matrix[n][m])
-    print(Matrix)
+    
     
 ###Dijkstra
     class Graph:
@@ -151,20 +153,13 @@ def main():
     def dijkstra(graph, start_vertex):
         D = {v:int('9999') for v in range(graph.v)}###
         D[start_vertex] = 0
-        #P = {node: -1 for node in range(graph.v)}
         P = {start_vertex: None}
-        #last_point = start_vertex
-        #print(graph.v)
-        #V = [0]*graph.v###
-        #print(V)
-
         pq = PriorityQueue()
         pq.put((0, start_vertex))
 
         while not pq.empty():
             (dist, current_vertex) = pq.get()
             graph.visited.append(current_vertex)
-            #print(graph.visited)
 
             for neighbor in range(graph.v):
                 if graph.edges[current_vertex][neighbor] != -1:
@@ -176,9 +171,6 @@ def main():
                             pq.put((new_cost, neighbor))
                             D[neighbor] = new_cost
                             P[neighbor] = current_vertex
-                            
-                
-            #print(pq.queue)    
         return P,D
    
     def make_path(parent, goal):
@@ -189,7 +181,6 @@ def main():
         while v is not None: # root has null parent
             path.append(v)
             v = parent[v]
-        #print(path)
         return path[::-1]
 
 ### 
@@ -198,44 +189,39 @@ def main():
     switch_host=[0]*num_switch
     #print(switch_host)
     switch_port=[0]*num_switch
+    addrs = [0]*num_switch
     while(1):
         msg, addr = controller.recvfrom(1024)
-        #print(addr)
-        #print(addr[0])
-        #print(addr[1])
-        
-        #print(msg.decode('utf8'))
+
         parse = msg.split( )
         switch_id = int(parse[0])
         switch_host[switch_id] = addr[0]
         switch_port[switch_id] = addr[1]
-        print(switch_host)
-        print(switch_port)
+        addrs[switch_id]=addr
         
         if 'Register_Request' in str(parse[1]):
-            #print('receive request')
             num_request=num_request+1
             register_request_received(switch_id)
             if num_request==num_switch: #send register response
-                print(Matrix)
+                #print(Matrix)
                 
                 for n in range(num_switch):
                     count_nieghbor = []
                     for m in range(len(config_array)-1):
-                        print(n,m)
+                        #print(n,m)
                         if Matrix[m][0]==n:
                             count_nieghbor.append(Matrix[m][1])
                         if Matrix[m][1]==n:
                             count_nieghbor.append(Matrix[m][0])
                     neighbor[n]=count_nieghbor
-                    controller.sendto((str(len(neighbor[n]))+' '+'Register_Response').encode('utf-8'),(switch_host[n],switch_port[n]))
+                    #controller.sendto((str(len(neighbor[n]))+' '+'Register_Response').encode('utf-8'),(switch_host[n],switch_port[n]))
+                    controller.sendto((str(len(neighbor[n]))+' '+'Register_Response').encode('utf-8'),(addrs[n]))
                     register_response_sent(n)
                     for i in range(len(neighbor[n])):
-                        #print(str(count_nieghbor[i]))
-                        #print(str(switch_host[int(count_nieghbor[i])]))
-                        controller.sendto((str(count_nieghbor[i])+' '+str(switch_host[int(count_nieghbor[i])])+' '+str(switch_port[int(count_nieghbor[i])])).encode('utf-8'),(switch_host[n],switch_port[n]))
+                        #controller.sendto((str(count_nieghbor[i])+' '+str(switch_host[int(count_nieghbor[i])])+' '+str(switch_port[int(count_nieghbor[i])])).encode('utf-8'),(switch_host[n],switch_port[n]))
+                        controller.sendto((str(count_nieghbor[i])+' '+str(switch_host[int(count_nieghbor[i])])+' '+str(switch_port[int(count_nieghbor[i])])).encode('utf-8'),(addrs[n]))
                 
-                print(neighbor)
+                #print(neighbor)
                 num_switch_dead = 0
                 dead_switch = []
                 num_switch_alive = num_switch-num_switch_dead
@@ -244,32 +230,22 @@ def main():
                 for n in range(num_switch):
                     g = Graph(num_switch)
                     for m in range(len(config_array)-1):
-                        #print(m,'num of add')
-                        #print(Matrix[n])
                         g.add_edge(Matrix[m][0], Matrix[m][1], Matrix[m][2])
-                    #D = dijkstra(g, n)
+
                     parent, Distance = dijkstra(g, n)
                     arr = [[-1 for x in range(num_switch)] for y in range(num_switch)]
                     for i in range(num_switch):
                         arr[i] = make_path(parent, i)
                         if len(arr[i])<2:
                             arr[i].append(i)
-                    print(arr)
-                    print(Distance)
-                    controller.sendto((str(n)+' '+'Route_Table'+' '+str(num_switch)).encode('utf-8'),(switch_host[n],switch_port[n]))
+                    #controller.sendto((str(n)+' '+'Route_Table'+' '+str(num_switch)).encode('utf-8'),(switch_host[n],switch_port[n]))
+                    controller.sendto((str(n)+' '+'Route_Table'+' '+str(num_switch)).encode('utf-8'),(addrs[n]))
                     for j in range(num_switch):
-                        controller.sendto((str(j)+' '+str(arr[j][1])).encode('utf-8'),(switch_host[n],switch_port[n]))
+                        #controller.sendto((str(j)+' '+str(arr[j][1])).encode('utf-8'),(switch_host[n],switch_port[n]))
+                        controller.sendto((str(j)+' '+str(arr[j][1])).encode('utf-8'),(addrs[n]))
                         route_table.append([n,j,arr[j][1],Distance[j]])
-                        #route_table[n][0] = n
-                        #route_table[n][1] = j
-                        #route_table[n][2] = arr[j][1]
-                        #route_table[n][3] = Distance[j]
-                #print(route_table)
+ 
                 routing_table_update(route_table)
-                        
-                    
-    
 
 if __name__ == "__main__":
     main()
-    
