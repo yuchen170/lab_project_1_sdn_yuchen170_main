@@ -264,7 +264,7 @@ def main():
                         #route_table[n][1] = j
                         #route_table[n][2] = arr[j][1]
                         #route_table[n][3] = Distance[j]
-                print(route_table)
+                #print(route_table)
                 routing_table_update(route_table)
                         
                     

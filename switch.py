@@ -119,9 +119,7 @@ def main():
         Timer()
     '''
     route_received=[]
-    RT_switchID = []
-    RT_DestID = []
-    RT_NextHop=[]
+
 
     while(1):
         msg, addr = switch.recvfrom(1024)
@@ -137,8 +135,8 @@ def main():
             for n in range(num_rule):
                 msg, addr = switch.recvfrom(1024)
                 route_received.append(msg)
-            print(route_received)
-            print('received')
+            #print(route_received)
+            #print('received')
             route_table = [[-1 for x in range(3)] for y in range(num_rule)]
             for n in range(num_rule):
                 x = route_received[n].split( )
@@ -147,7 +145,7 @@ def main():
                 route_table[n][0] = my_id
                 route_table[n][1] = dest
                 route_table[n][2] = next
-            print(route_table)
+            #print(route_table)
             routing_table_update(route_table)
             
                 
