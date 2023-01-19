@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 """This is the Switch Starter Code for ECE50863 Lab Project 1
 Author: Xin Du
@@ -9,6 +10,7 @@ import sys
 import socket
 from datetime import date, datetime
 import threading
+
 
 # Please do not modify the name of the log file, otherwise you will lose points because the grader won't be able to find your log file
 LOG_FILE = "switch#.log" # The log file for switches are switch#.log, where # is the id of that switch (i.e. switch0.log, switch1.log). The code for replacing # with a real number has been given to you in the main function.
@@ -88,6 +90,7 @@ def write_to_log(log):
         # Write to log
         log_file.writelines(log)
 
+        
 def main():
 
     global LOG_FILE
@@ -99,34 +102,26 @@ def main():
         sys.exit(1)
 
     my_id = int(sys.argv[1])
-    LOG_FILE = 'switch' + str(my_id) + ".log" 
+    LOG_FILE = 'switch' + str(my_id) + ".log"
+    
     # Write your code below or elsewhere in this file
-    my_hostname = str(sys.argv[2])
-    my_port = int(sys.argv[3])
+    controller_hostname = str(sys.argv[2])
+    controller_port = int(sys.argv[3])
+    addr = ('127.0.0.1',controller_port)
+    print(controller_port)
     # register request
     register_request_sent()
     switch = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    #print(socket)
-    switch.bind((my_hostname,my_port))
-    #msg = str()
-    switch.sendto((str(my_id)+' Register_Request ').encode('utf-8'),('127.0.0.1',9999))
-    #print(switch.recvfrom.decoede('utf-8'))
-    '''
-    def Timer():
-        threading.Timer(5.0, Timer).start()
-        for n in num_switch:
-            switch.sendto(('Keep_Alive').encode('utf-8'),(switch_host[n],switch_port[n]))
-        Timer()
-    '''
+    #switch.bind((my_hostname,my_port))
+    switch.sendto((str(my_id)+' Register_Request ').encode('utf-8'),addr)
+
     route_received=[]
 
 
     while(1):
         msg, addr = switch.recvfrom(1024)
-        print(msg.decode('utf8'))
-        
         parse = msg.split( )
-        #print(parse[1])
+
         type=str(parse[1])
         if 'Register_Response' in type:
             register_response_received()
@@ -135,8 +130,6 @@ def main():
             for n in range(num_rule):
                 msg, addr = switch.recvfrom(1024)
                 route_received.append(msg)
-            #print(route_received)
-            #print('received')
             route_table = [[-1 for x in range(3)] for y in range(num_rule)]
             for n in range(num_rule):
                 x = route_received[n].split( )
@@ -145,16 +138,7 @@ def main():
                 route_table[n][0] = my_id
                 route_table[n][1] = dest
                 route_table[n][2] = next
-            #print(route_table)
             routing_table_update(route_table)
-            
-                
-                
-                
-            
-            
-            
-
+                  
 if __name__ == "__main__":
     main()
-    
